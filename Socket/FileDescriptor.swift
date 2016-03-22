@@ -10,6 +10,7 @@ typealias FileDescriptorRawType = Int32
 
 protocol FileDescriptorType: NilLiteralConvertible {
     var raw: FileDescriptorRawType { get }
+    init(_ raw: FileDescriptorRawType)
 }
 
 struct FileDescriptor: FileDescriptorType {
@@ -21,7 +22,7 @@ struct FileDescriptor: FileDescriptorType {
     }
     
     init(nilLiteral: ()) {
-        self.raw = -1
+        self.init(Int32(-1))
     }
     
 }

@@ -12,74 +12,101 @@
     private let READ = Glibc.read
 #else
     import Darwin
+    private let SEND = Darwin.send
     private let CLOSE = Darwin.close
-    private let READ = Darwin.read
-    private let WRITE = Darwin.write
+    private let RECV = Darwin.recv
+    private let ERRNO = Darwin.errno
 #endif
 
-enum SocketFamily {
-    case IPv4
-    case IPv6
-    
-    var raw: Int32 {
-        switch self {
-        case .IPv4:
-            return AF_INET
-        case .IPv6:
-            return AF_INET6
-        }
+protocol SocketFamilyType {
+    static var raw: Int32 { get }
+    init()
+}
+
+struct IPv4: SocketFamilyType {
+    static var raw: Int32 {
+        return AF_INET
     }
 }
 
-public enum SocketProtocol {
-    case TCP
-    case UDP
-    
-    var rawStreamValue: Int32 {
-        switch self {
-        case .TCP:
-            return SOCK_STREAM
-        case .UDP:
-            return SOCK_DGRAM
-        }
-    }
-    
-    var rawProtocolValue: Int32 {
-        switch self {
-        case .TCP:
-            return IPPROTO_TCP
-        case .UDP:
-            return IPPROTO_UDP
-        }
+struct IPv6: SocketFamilyType {
+    static var raw: Int32 {
+        return AF_INET6
     }
 }
 
+protocol SocketProtocolType {
+    static var rawStreamValue: Int32 { get }
+    static var rawProtocolValue: Int32  { get }
+    init()
+}
+
+struct TCP: SocketProtocolType {
+    
+    static var rawStreamValue: Int32 {
+        return SOCK_STREAM
+    }
+    
+    static var rawProtocolValue: Int32 {
+        return IPPROTO_TCP
+    }
+    
+}
+
+struct UDP: SocketProtocolType {
+    
+    static var rawStreamValue: Int32 {
+        return SOCK_DGRAM
+    }
+    
+    static var rawProtocolValue: Int32 {
+        return IPPROTO_UDP
+    }
+    
+}
 
 protocol SocketType {
 
-    var fd: FileDescriptor { get }
+    var fd: FileDescriptorType { get }
     
 }
 
 enum SocketError: ErrorType {
     case NativeError(Int32, String)
-    
-    static func fromErrno() -> SocketError {
-        return SocketError.NativeError(errno, String.fromCString(strerror(errno)) ?? "")
+    case UnkownProtocolType()
+
+    static func errno() -> SocketError {
+        return SocketError.NativeError(ERRNO, String.fromCString(strerror(ERRNO)) ?? "")
     }
 }
 
+typealias TCPSocket4 = Socket<IPv4, TCP>
+typealias UDPSocket4 = Socket<IPv4, UDP>
+typealias TCPSocket6 = Socket<IPv6, TCP>
+typealias UDPSocket6 = Socket<IPv6, UDP>
 
-class Socket: SocketType {
+class Socket<T: SocketFamilyType, P: SocketProtocolType>: SocketType {
     
-    var fd: FileDescriptor
-    let family: SocketFamily
-    let proto: SocketProtocol
+    var fd: FileDescriptorType
     
-    init(family: SocketFamily, proto: SocketProtocol) {
-        self.family = family
-        self.proto = proto
-        self.fd = FileDescriptor(socket(self.family.raw, self.proto.rawStreamValue, self.proto.rawProtocolValue))
+    init() {
+        self.fd = FileDescriptor(socket(T.raw, P.rawStreamValue, P.rawProtocolValue))
+    }
+    
+    init?(fd: FileDescriptor) {
+        self.fd = fd
+    }
+    
+    init?(fdRaw: FileDescriptorRawType) {
+        self.fd = FileDescriptor(fdRaw)
+    }
+    
+    deinit {
+        do {
+           try close()
+        }catch {
+            // close error
+        }
     }
 
 }
@@ -87,13 +114,17 @@ class Socket: SocketType {
 extension Socket: Readable {
     
     func read(size: Int) throws -> [Byte] {
+        return try recv(size)
+    }
+    
+    func recv(size: Int, flags: Int = 0) throws -> [Byte] {
         let buffer = UnsafeMutablePointer<Byte>.alloc(size)
         defer {
             buffer.dealloc(size)
         }
-        let res = READ(fd.raw, buffer, size)
+        let res = RECV(fd.raw, buffer, size, Int32(flags))
         guard res >= 0 else {
-            throw SocketError.fromErrno()
+            throw SocketError.errno()
         }
         var data = [Byte](count: size, repeatedValue: 0)
         memcpy(&data, buffer, data.count)
@@ -105,9 +136,13 @@ extension Socket: Readable {
 extension Socket: Writable {
     
     func write(buffer: [Byte]) throws {
-        let res = WRITE(fd.raw, buffer, buffer.count)
+        try send(buffer)
+    }
+    
+    func send(buffer: [Byte], flags: Int = 0) throws {
+        let res = SEND(fd.raw, buffer, buffer.count, Int32(flags))
         guard res >= 0 else {
-            throw SocketError.fromErrno()
+            throw SocketError.errno()
         }
     }
 
@@ -117,7 +152,7 @@ extension Socket: Closable {
     
     func close() throws {
         CLOSE(fd.raw)
-        fd = nil
+        fd = FileDescriptor(nilLiteral: ())
     }
     
 }
