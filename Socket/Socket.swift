@@ -16,24 +16,11 @@
     private let CLOSE = Darwin.close
     private let RECV = Darwin.recv
     private let ERRNO = Darwin.errno
+    private let BIND = Darwin.bind
+    private let LISTEN = Darwin.listen
+    private let ACCEPT = Darwin.accept
 #endif
 
-protocol SocketFamilyType {
-    static var raw: Int32 { get }
-    init()
-}
-
-struct IPv4: SocketFamilyType {
-    static var raw: Int32 {
-        return AF_INET
-    }
-}
-
-struct IPv6: SocketFamilyType {
-    static var raw: Int32 {
-        return AF_INET6
-    }
-}
 
 protocol SocketProtocolType {
     static var rawStreamValue: Int32 { get }
@@ -65,7 +52,7 @@ struct UDP: SocketProtocolType {
     
 }
 
-protocol SocketType {
+protocol SocketType: Readable, Writable, Closable {
 
     var fd: FileDescriptorType { get }
     
@@ -85,19 +72,19 @@ typealias UDPSocket4 = Socket<IPv4, UDP>
 typealias TCPSocket6 = Socket<IPv6, TCP>
 typealias UDPSocket6 = Socket<IPv6, UDP>
 
-class Socket<T: SocketFamilyType, P: SocketProtocolType>: SocketType {
+class Socket<T: IPType, P: SocketProtocolType>: SocketType {
     
     var fd: FileDescriptorType
     
     init() {
-        self.fd = FileDescriptor(socket(T.raw, P.rawStreamValue, P.rawProtocolValue))
+        self.fd = FileDescriptor(socket(T.rawFamilyValue, P.rawStreamValue, P.rawProtocolValue))
     }
     
-    init?(fd: FileDescriptor) {
+    init(fd: FileDescriptor) {
         self.fd = fd
     }
     
-    init?(fdRaw: FileDescriptorRawType) {
+    init(fdRaw: FileDescriptorRawType) {
         self.fd = FileDescriptor(fdRaw)
     }
     
@@ -153,6 +140,38 @@ extension Socket: Closable {
     func close() throws {
         CLOSE(fd.raw)
         fd = FileDescriptor(nilLiteral: ())
+    }
+    
+}
+
+
+extension Socket {
+    
+    func bind(ip: T) throws {
+        var sockAddr = ip.sockAddr.general
+        let res = BIND(fd.raw, &sockAddr, socklen_t(sizeofValue(sockAddr)))
+        guard res >= 0 else {
+            throw SocketError.errno()
+        }
+    }
+    
+    func listen(backlog: Int = Int(SOMAXCONN)) throws {
+        let res = LISTEN(fd.raw, Int32(backlog))
+        guard res >= 0 else {
+            throw SocketError.errno()
+        }
+    }
+    
+    func accept() throws -> Socket {
+        var addr: sockaddr?
+        var socklen = socklen_t(sizeofValue(addr))
+        let res = withUnsafePointers(&addr, &socklen) {
+            return ACCEPT(fd.raw, UnsafeMutablePointer($0), UnsafeMutablePointer($1))
+        }
+        guard res >= 0 else {
+            throw SocketError.errno()
+        }
+        return Socket(fdRaw: res)
     }
     
 }

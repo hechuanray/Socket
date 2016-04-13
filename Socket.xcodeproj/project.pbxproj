@@ -10,6 +10,7 @@
 		9B4B5BD01C9A513D00782983 /* Socket.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B4B5BCF1C9A513D00782983 /* Socket.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9B4B5BD71C9A513E00782983 /* Socket.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B4B5BCC1C9A513D00782983 /* Socket.framework */; };
 		9B4B5BDC1C9A513E00782983 /* SocketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4B5BDB1C9A513E00782983 /* SocketTests.swift */; };
+		9BA55C671CA1441800B778C3 /* Addr.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA55C661CA1441800B778C3 /* Addr.swift */; };
 		9BC857121C9F9FB900E43404 /* FileDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC857111C9F9FB900E43404 /* FileDescriptor.swift */; };
 		9BC857141C9FA0E900E43404 /* IO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC857131C9FA0E900E43404 /* IO.swift */; };
 		9BC857161C9FA36900E43404 /* Socket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC857151C9FA36900E43404 /* Socket.swift */; };
@@ -32,6 +33,7 @@
 		9B4B5BD61C9A513E00782983 /* SocketTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SocketTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9B4B5BDB1C9A513E00782983 /* SocketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocketTests.swift; sourceTree = "<group>"; };
 		9B4B5BDD1C9A513E00782983 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9BA55C661CA1441800B778C3 /* Addr.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Addr.swift; sourceTree = "<group>"; };
 		9BC857111C9F9FB900E43404 /* FileDescriptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileDescriptor.swift; sourceTree = "<group>"; };
 		9BC857131C9FA0E900E43404 /* IO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IO.swift; sourceTree = "<group>"; };
 		9BC857151C9FA36900E43404 /* Socket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Socket.swift; sourceTree = "<group>"; };
@@ -78,6 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				9B4B5BCF1C9A513D00782983 /* Socket.h */,
+				9BA55C661CA1441800B778C3 /* Addr.swift */,
 				9BC857151C9FA36900E43404 /* Socket.swift */,
 				9BC857111C9F9FB900E43404 /* FileDescriptor.swift */,
 				9BC857131C9FA0E900E43404 /* IO.swift */,
@@ -203,6 +206,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9BA55C671CA1441800B778C3 /* Addr.swift in Sources */,
 				9BC857121C9F9FB900E43404 /* FileDescriptor.swift in Sources */,
 				9BC857141C9FA0E900E43404 /* IO.swift in Sources */,
 				9BC857161C9FA36900E43404 /* Socket.swift in Sources */,
